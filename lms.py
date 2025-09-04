@@ -9,7 +9,7 @@ class User: # abstract class
     def __init__(self, name, email, userId):
         self.name = name
         self.email = email
-        self.userId = userId # should store that thing in sqlite db
+        self.userId = userId
         self.borrowedBooks = []
 
     def canBorrow(self):
@@ -68,11 +68,13 @@ class Library:
 
 
     def removeBook(self, isbn):
-        if isbn in self._books:
-            del self._books[isbn]
-            return True, 'Book removed successfully'
-        else:
+        book = self._books.get(isbn)
+        if not book:
             return False, f"ISBN {isbn} does not exist."
+        if not book.isAvailable():
+            return False, f"Cannot remove ISBN {isbn} — book is currently borrowed."
+        del self._books[isbn]
+        return True, 'Book removed successfully'
 
 
     def findBook(self, isbn):
@@ -296,7 +298,7 @@ class LibConsole:
     def handleAddUser(self):
         name = str(input('Enter name: '))
         email = str(input('Enter email: '))
-        userId = str(uuid.uuid4())[:8] # just a placeholder (maybe)
+        userId = str(uuid.uuid4())[:8] # just a placeholder (could have collisions)
         print('Choose a user type. User types:\n1 - Student\n2 - Faculty\n3 - Guest')
         type = self.getChoice(3, 1)
         user, msg = self.lib.registerUser(name, email, userId, type)
